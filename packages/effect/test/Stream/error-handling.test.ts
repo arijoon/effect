@@ -359,4 +359,29 @@ describe("Stream", () => {
       )
       deepStrictEqual(Array.from(result), [1, 2])
     }))
+
+  it.effect("orDie with Stream.fail", () =>
+    Effect.gen(function*($) {
+      const stream = pipe(Stream.succeed(1), Stream.concat(Stream.fail("boom")))
+      const result = yield* $(
+        stream,
+        Stream.orDie,
+        Stream.runCollect,
+        Effect.catchAllDefect(() => Effect.succeed("EXPECTED" as const))
+      )
+      deepStrictEqual(result, "EXPECTED")
+    }))
+
+  it.effect("orDie effectful failure", () =>
+    Effect.gen(function*($) {
+      const stream = Stream.succeed(1)
+      const result = yield* $(
+        stream,
+        Stream.mapEffect(() => Effect.fail("UNEXPECTED" as const)),
+        Stream.orDie,
+        Stream.runCollect,
+        Effect.catchAllDefect(() => Effect.succeed("EXPECTED" as const))
+      )
+      deepStrictEqual(result, "EXPECTED")
+    }))
 })
